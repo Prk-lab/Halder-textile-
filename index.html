@@ -1,0 +1,60 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Haldar Textile — Login</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div style="max-width:480px;margin:80px auto;padding:12px">
+    <div class="card">
+      <h2 style="margin:0 0 8px 0">Worker Login</h2>
+      <p class="small">Enter your worker code (min 3 characters). Numeric or string allowed.</p>
+      <form id="loginForm">
+        <label>Worker Code</label>
+        <input id="workerCode" class="input" placeholder="e.g., worker123" required minlength="3">
+        <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+          <button class="button" type="submit">Login</button>
+          <button type="button" id="checkBtn" class="button ghost">Check DB</button>
+          <div class="conn"><span id="loginDot" class="dot"></span><small id="loginText" class="small">Checking...</small></div>
+        </div>
+      </form>
+      <div id="msg" style="color:#b91c1c;margin-top:8px"></div>
+    </div>
+    <div style="text-align:center;margin-top:12px;color:var(--muted)"><small>Admin users will see profit charts under Overview.</small></div>
+  </div>
+
+<script type="module">
+import { verifyWorkerKey, checkFirebaseConnected } from './firebase.js';
+
+const loginDot = document.getElementById('loginDot');
+const loginText = document.getElementById('loginText');
+const msg = document.getElementById('msg');
+const checkBtn = document.getElementById('checkBtn');
+
+async function refreshConn(){
+  const ok = await checkFirebaseConnected();
+  loginDot.classList.toggle('green', ok);
+  loginText.innerText = ok ? 'Firebase OK' : 'Offline';
+}
+refreshConn();
+checkBtn.addEventListener('click', refreshConn);
+
+document.getElementById('loginForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  msg.innerText = '';
+  const code = document.getElementById('workerCode').value.trim();
+  if(!code || code.length < 3){ msg.innerText = 'Enter code at least 3 characters.'; return; }
+  const ok = await checkFirebaseConnected();
+  if(!ok){ msg.innerText = 'Cannot reach Firebase. Check connection or rules.'; return; }
+  const worker = await verifyWorkerKey(code);
+  if(worker){
+    localStorage.setItem('worker', JSON.stringify({ id: worker.id, name: worker.data.name || '', role: worker.data.role || 'worker', key: code }));
+    location.href = 'app.html';
+  } else {
+    msg.innerText = 'Invalid worker code.';
+  }
+});
+</script>
+</body>
+</html>

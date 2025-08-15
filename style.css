@@ -1,0 +1,44 @@
+/* style.css - simple colorful style, minimal animation */
+:root{
+  --bg: #f4f7fb;
+  --card: #ffffff;
+  --accent: #0f172a;
+  --muted: #6b7280;
+  --accent-2: #0ea5a3;
+  --accent-3: #8b5cf6;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--accent)}
+.app{display:flex;min-height:100vh}
+.sidebar{width:260px;background:linear-gradient(180deg,#ffffff,#f8fafc);border-right:1px solid rgba(15,23,42,0.06);padding:18px;display:flex;flex-direction:column;gap:12px}
+.logo{font-weight:800;font-size:1.1rem;color:var(--accent-3)}
+.search{margin-top:6px}
+.slinks{margin-top:6px;display:flex;flex-direction:column;gap:6px}
+.slink{padding:10px;border-radius:8px;text-decoration:none;color:var(--accent);display:flex;justify-content:space-between;align-items:center}
+.slink:hover{background:rgba(14,165,163,0.06)}
+.slink.active{background:var(--accent-2);color:white}
+.content{flex:1;padding:18px}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.card{background:var(--card);padding:14px;border-radius:12px;box-shadow:0 8px 20px rgba(2,6,23,0.04);margin-bottom:12px}
+.conn{display:flex;gap:8px;align-items:center}
+.dot{width:12px;height:12px;border-radius:999px;background:crimson;display:inline-block}
+.dot.green{background:limegreen}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.table{width:100%;border-collapse:collapse}
+.table th,.table td{padding:8px;border-bottom:1px solid #f1f5f9;text-align:left}
+.button{background:var(--accent);color:white;padding:8px 12px;border-radius:8px;border:none;cursor:pointer}
+.button.ghost{background:transparent;color:var(--accent);border:1px solid #eee}
+.input,select,textarea{width:100%;padding:8px;border-radius:8px;border:1px solid #e6eef6;background:white}
+.small{font-size:0.9rem;color:var(--muted)}
+.badge{display:inline-block;padding:6px 8px;border-radius:999px;background:rgba(139,92,246,0.12);color:var(--accent-3);font-weight:600}
+
+/* color variant pills */
+.variant{display:inline-block;padding:6px 8px;border-radius:999px;margin-right:6px;margin-bottom:6px;background:#f1f5f9}
+
+/* responsive */
+@media(max-width:900px){
+  .sidebar{position:fixed;left:-320px;top:0;height:100%;z-index:50;transition:left .18s}
+  .sidebar.open{left:0}
+  .content{padding:12px}
+  .row{grid-template-columns:1fr}
+}

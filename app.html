@@ -1,0 +1,496 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Haldar Textile — App</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="logo">Haldar Textile</div>
+      <div class="small">Signed in as <strong id="userName">Worker</strong></div>
+      <div style="margin-top:8px">
+        <input id="productSearch" class="input" placeholder="Search product">
+      </div>
+      <div class="slinks" id="menuLinks">
+        <a href="#" class="slink active" data-tab="overview">Overview</a>
+        <a href="#" class="slink" data-tab="products">Products & Stock</a>
+        <a href="#" class="slink" data-tab="newProduct">New Product</a>
+        <a href="#" class="slink" data-tab="purchases">Purchases</a>
+        <a href="#" class="slink" data-tab="sales">Sales</a>
+        <a href="#" class="slink" data-tab="stock">Stock Adjust</a>
+        <a href="#" class="slink" data-tab="history">History</a>
+        <a href="#" class="slink" data-tab="workers" id="workersTab" style="display:none">Workers</a>
+        <a href="#" class="slink" id="logoutLink">Logout</a>
+      </div>
+      <div style="margin-top:auto">
+        <div class="small">DB status</div>
+        <div class="conn"><span id="dbDot" class="dot"></span><small id="dbText" class="small">Checking...</small></div>
+      </div>
+    </aside>
+
+    <main class="content">
+      <div class="header">
+        <div><strong id="pageTitle">Overview</strong></div>
+        <div class="conn">
+          <div class="small">Role: <strong id="userRole">worker</strong></div>
+        </div>
+      </div>
+
+      <div id="contentArea">
+        <!-- Overview -->
+        <div id="overview" class="card tab">
+          <h3>Overview</h3>
+          <p class="small">Net profit charts (admin only) and quick stats.</p>
+          <div id="overviewContent">
+            <div id="stats" class="row">
+              <div class="card"><h4>Total Products</h4><div id="statProducts" class="small">—</div></div>
+              <div class="card"><h4>Total Stock (units)</h4><div id="statStock" class="small">—</div></div>
+            </div>
+            <div style="margin-top:12px">
+              <label>Period</label>
+              <select id="profitPeriod" class="input"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select>
+            </div>
+            <canvas id="profitChart" style="max-height:320px;margin-top:12px"></canvas>
+          </div>
+        </div>
+
+        <!-- Products -->
+        <div id="products" class="card tab" style="display:none">
+          <h3>Products & Stock</h3>
+          <div style="margin-top:8px">
+            <input id="filterInput" class="input" placeholder="Filter by name">
+          </div>
+          <table class="table" style="margin-top:8px">
+            <thead><tr><th>Product</th><th>Variants (color)</th><th>Total Stock</th><th>Actions</th></tr></thead>
+            <tbody id="productsTable"></tbody>
+          </table>
+        </div>
+
+        <!-- New Product -->
+        <div id="newProduct" class="card tab" style="display:none">
+          <h3>New Product</h3>
+          <form id="newProductForm">
+            <label>Product name</label>
+            <input id="np_name" class="input" required>
+            <label>Product description</label>
+            <textarea id="np_desc" class="input" rows="3"></textarea>
+            <label>Color variants (comma separated, e.g., Red:10,Blue:5)</label>
+            <input id="np_colors" class="input" placeholder="Red:10,Blue:5">
+            <div style="margin-top:8px"><button class="button" type="submit">Create Product</button></div>
+          </form>
+        </div>
+
+        <!-- Purchases -->
+        <div id="purchases" class="card tab" style="display:none">
+          <h3>Add Purchase</h3>
+          <form id="purchaseForm">
+            <div class="row">
+              <div>
+                <label>Product</label>
+                <select id="purchaseProduct" class="input" required></select>
+              </div>
+              <div>
+                <label>Purchase from</label>
+                <input id="purchaseFrom" class="input">
+              </div>
+              <div>
+                <label>Quantity by color (e.g., Red:2,Blue:3)</label>
+                <input id="purchaseQtyColor" class="input" required>
+              </div>
+              <div>
+                <label>Cost price (per unit)</label>
+                <input id="purchaseCost" class="input" type="number" step="0.01" required>
+              </div>
+            </div>
+            <label>Other expenses (total)</label>
+            <input id="purchaseOther" class="input" type="number" step="0.01" value="0">
+            <div style="margin-top:8px"><button class="button" type="submit">Save Purchase</button></div>
+          </form>
+        </div>
+
+        <!-- Sales -->
+        <div id="sales" class="card tab" style="display:none">
+          <h3>Record Sale</h3>
+          <form id="saleForm">
+            <div class="row">
+              <div>
+                <label>Customer name</label>
+                <input id="saleCustomer" class="input">
+              </div>
+              <div>
+                <label>Product</label>
+                <select id="saleProduct" class="input" required></select>
+              </div>
+              <div>
+                <label>Quantity by color (e.g., Red:2,Blue:1)</label>
+                <input id="saleQtyColor" class="input" required>
+              </div>
+              <div>
+                <label>Sale price (per unit)</label>
+                <input id="salePrice" class="input" type="number" step="0.01" required>
+              </div>
+            </div>
+            <label>Other expenses (total)</label>
+            <input id="saleOther" class="input" type="number" step="0.01" value="0">
+            <div style="margin-top:8px"><button class="button" type="submit">Save Sale</button></div>
+          </form>
+        </div>
+
+        <!-- Stock adjust -->
+        <div id="stock" class="card tab" style="display:none">
+          <h3>Adjust Stock</h3>
+          <form id="stockForm">
+            <div class="row">
+              <div>
+                <label>Product</label>
+                <select id="stockProduct" class="input" required></select>
+              </div>
+              <div>
+                <label>Operation</label>
+                <select id="stockOp" class="input"><option value="add">Add</option><option value="remove">Remove</option></select>
+              </div>
+              <div>
+                <label>Quantity by color (e.g., Red:5)</label>
+                <input id="stockQtyColor" class="input" required>
+              </div>
+              <div>
+                <label>Reason (optional)</label>
+                <input id="stockReason" class="input">
+              </div>
+            </div>
+            <div style="margin-top:8px"><button class="button" type="submit">Apply</button></div>
+          </form>
+        </div>
+
+        <!-- History -->
+        <div id="history" class="card tab" style="display:none">
+          <h3>History</h3>
+          <div style="margin-top:8px">
+            <button id="showSales" class="button ghost">Show Sales</button>
+            <button id="showPurchases" class="button ghost">Show Purchases</button>
+            <button id="showStockLog" class="button ghost">Show Stock Adjust Log</button>
+          </div>
+          <div id="historyArea" style="margin-top:12px"></div>
+        </div>
+
+        <!-- Workers (admin only) -->
+        <div id="workers" class="card tab" style="display:none">
+          <h3>Workers (Admin)</h3>
+          <form id="addWorkerForm" style="margin-bottom:12px">
+            <div class="row">
+              <div><label>Name</label><input id="w_name" class="input" placeholder="e.g., Ramesh"></div>
+              <div><label>Key (min 3 chars)</label><input id="w_key" class="input" placeholder="secret123" minlength="3" required></div>
+            </div>
+            <div style="margin-top:8px">
+              <label>Role</label>
+              <select id="w_role" class="input"><option value="worker">worker</option><option value="admin">admin</option></select>
+            </div>
+            <div style="margin-top:8px"><button class="button" type="submit">Add Worker</button></div>
+          </form>
+          <table class="table"><thead><tr><th>Name</th><th>Key</th><th>Role</th><th>Actions</th></tr></thead><tbody id="workersTable"></tbody></table>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+<script type="module">
+import { app, db, checkFirebaseConnected } from './firebase.js';
+import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, orderBy, onSnapshot, serverTimestamp, where, limit } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+// Auth guard
+const worker = JSON.parse(localStorage.getItem('worker'));
+if(!worker){ location.href = 'index.html'; }
+document.getElementById('userName').innerText = worker.name || worker.key || 'Worker';
+document.getElementById('userRole').innerText = worker.role || 'worker';
+
+// Show workers tab only for admin
+if((worker.role || '') === 'admin'){
+  document.getElementById('workersTab').style.display = '';
+}
+
+// DB status
+const dbDot = document.getElementById('dbDot');
+const dbText = document.getElementById('dbText');
+async function refreshDB(){ const ok = await checkFirebaseConnected(); dbDot.classList.toggle('green', ok); dbText.innerText = ok ? 'Firebase OK' : 'Offline'; }
+refreshDB();
+
+// Sidebar menu handling
+const tabs = document.querySelectorAll('.slink');
+const tabContents = document.querySelectorAll('.tab');
+const pageTitle = document.getElementById('pageTitle');
+tabs.forEach(t=> t.addEventListener('click', (e)=>{
+  e.preventDefault();
+  tabs.forEach(x=> x.classList.remove('active'));
+  t.classList.add('active');
+  const tab = t.dataset.tab;
+  showTab(tab);
+}));
+function showTab(name){
+  tabContents.forEach(c=> c.style.display = c.id === name ? '' : 'none');
+  pageTitle.innerText = name.charAt(0).toUpperCase() + name.slice(1);
+}
+
+// Logout
+document.getElementById('logoutLink').addEventListener('click',(e)=>{ e.preventDefault(); localStorage.removeItem('worker'); location.href='index.html'; });
+
+// Collections
+const productsCol = collection(db, 'products');
+const purchasesCol = collection(db, 'purchases');
+const salesCol = collection(db, 'sales');
+const stockLogCol = collection(db, 'stock_log');
+const workersCol = collection(db, 'workers');
+
+// Utility: parse color:qty string "Red:2,Blue:3" => [{color,qty},...]
+function parseColorQty(str){
+  if(!str) return [];
+  return str.split(',').map(s=>{
+    const parts = s.split(':').map(x=>x.trim());
+    return { color: parts[0] || '', qty: parseInt(parts[1]||'0') || 0 };
+  }).filter(x=> x.color && x.qty>0);
+}
+
+// Load products for selects and table
+async function loadProducts(){
+  const snap = await getDocs(query(productsCol, orderBy('name')));
+  const purchaseSel = document.getElementById('purchaseProduct');
+  const saleSel = document.getElementById('saleProduct');
+  const stockSel = document.getElementById('stockProduct');
+  purchaseSel.innerHTML = '<option value="">Select product</option>';
+  saleSel.innerHTML = '<option value="">Select product</option>';
+  stockSel.innerHTML = '<option value="">Select product</option>';
+  const tbody = document.getElementById('productsTable');
+  tbody.innerHTML = '';
+  let totalStockUnits = 0;
+  let totalProducts = 0;
+  snap.forEach(d=>{
+    const p = d.data();
+    totalProducts++;
+    const total = (p.variants || []).reduce((s,v)=> s + (v.stock||0), 0);
+    totalStockUnits += total;
+    const tr = document.createElement('tr');
+    const variantsHTML = (p.variants || []).map(v=>`<span class="variant">${v.color}: ${v.stock}</span>`).join(' ');
+    tr.innerHTML = `<td><strong>${p.name}</strong><div class="small">${p.description||''}</div></td><td>${variantsHTML}</td><td>${total}</td><td><button class="button ghost" data-id="${d.id}" data-edit>Edit</button></td>`;
+    tbody.appendChild(tr);
+    const opt1 = document.createElement('option'); opt1.value = d.id; opt1.textContent = p.name; purchaseSel.appendChild(opt1);
+    const opt2 = document.createElement('option'); opt2.value = d.id; opt2.textContent = p.name; saleSel.appendChild(opt2);
+    const opt3 = document.createElement('option'); opt3.value = d.id; opt3.textContent = p.name; stockSel.appendChild(opt3);
+  });
+  document.getElementById('statProducts').innerText = totalProducts;
+  document.getElementById('statStock').innerText = totalStockUnits;
+}
+
+// Purchase form handling (continued)
+import { serverTimestamp, updateDoc, getDoc, doc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+document.getElementById('purchaseForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const pid = document.getElementById('purchaseProduct').value;
+  const from = document.getElementById('purchaseFrom').value.trim();
+  const colorQty = document.getElementById('purchaseQtyColor').value;
+  const cost = parseFloat(document.getElementById('purchaseCost').value) || 0;
+  const other = parseFloat(document.getElementById('purchaseOther').value) || 0;
+  if(!pid){ alert('Select product'); return; }
+  const parsed = parseColorQty(colorQty);
+  if(parsed.length===0){ alert('Enter color quantities'); return; }
+  const total = parsed.reduce((s,i)=> s + (i.qty * cost), 0) + other;
+  await addDoc(purchasesCol, { productId: pid, productName: document.getElementById('purchaseProduct').selectedOptions[0].textContent, from, items: parsed, cost, other, total, createdAt: serverTimestamp() });
+  // update product variants
+  const pRef = doc(db, 'products', pid);
+  const pSnap = await getDoc(pRef);
+  if(pSnap.exists()){
+    const p = pSnap.data();
+    const newVariants = (p.variants || []).map(v=> ({...v}));
+    parsed.forEach(item=>{
+      const found = newVariants.find(x=> x.color.toLowerCase() === item.color.toLowerCase());
+      if(found) found.stock = (found.stock||0) + item.qty;
+      else newVariants.push({ color: item.color, stock: item.qty });
+    });
+    await updateDoc(pRef, { variants: newVariants });
+  }
+  alert('Purchase recorded'); e.target.reset(); await loadProducts();
+});
+
+// Sale handling
+document.getElementById('saleForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const pid = document.getElementById('saleProduct').value;
+  const customer = document.getElementById('saleCustomer').value.trim();
+  const colorQty = document.getElementById('saleQtyColor').value;
+  const price = parseFloat(document.getElementById('salePrice').value) || 0;
+  const other = parseFloat(document.getElementById('saleOther').value) || 0;
+  if(!pid){ alert('Select product'); return; }
+  const parsed = parseColorQty(colorQty);
+  if(parsed.length===0){ alert('Enter color quantities'); return; }
+  const total = parsed.reduce((s,i)=> s + (i.qty * price), 0) - other;
+  await addDoc(salesCol, { productId: pid, productName: document.getElementById('saleProduct').selectedOptions[0].textContent, customer, items: parsed, price, other, total, createdAt: serverTimestamp() });
+  // update stock
+  const pRef = doc(db, 'products', pid);
+  const pSnap = await getDoc(pRef);
+  if(pSnap.exists()){
+    const p = pSnap.data();
+    const newVariants = (p.variants || []).map(v=> ({...v}));
+    parsed.forEach(item=>{
+      const found = newVariants.find(x=> x.color.toLowerCase() === item.color.toLowerCase());
+      if(found) found.stock = Math.max(0, (found.stock||0) - item.qty);
+    });
+    await updateDoc(pRef, { variants: newVariants });
+  }
+  alert('Sale recorded'); e.target.reset(); await loadProducts();
+});
+
+// Stock adjust handling
+document.getElementById('stockForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const pid = document.getElementById('stockProduct').value;
+  const op = document.getElementById('stockOp').value;
+  const parsed = parseColorQty(document.getElementById('stockQtyColor').value);
+  const reason = document.getElementById('stockReason').value.trim();
+  if(!pid){ alert('Select product'); return; }
+  if(parsed.length===0){ alert('Enter color quantities'); return; }
+  const pRef = doc(db, 'products', pid);
+  const pSnap = await getDoc(pRef);
+  if(pSnap.exists()){
+    const p = pSnap.data();
+    const newVariants = (p.variants || []).map(v=> ({...v}));
+    parsed.forEach(item=>{
+      const found = newVariants.find(x=> x.color.toLowerCase() === item.color.toLowerCase());
+      if(found){
+        found.stock = op === 'add' ? (found.stock||0) + item.qty : Math.max(0, (found.stock||0) - item.qty);
+      } else if(op === 'add'){
+        newVariants.push({ color: item.color, stock: item.qty });
+      }
+    });
+    await updateDoc(pRef, { variants: newVariants });
+    await addDoc(stockLogCol, { productId: pid, productName: p.name, op, items: parsed, reason, by: worker.name||worker.key, createdAt: serverTimestamp() });
+  }
+  alert('Stock adjusted'); e.target.reset(); await loadProducts();
+});
+
+// History buttons implementation continued
+document.getElementById('showSales').addEventListener('click', async ()=>{
+  const snap = await getDocs(query(salesCol, orderBy('createdAt','desc'), limit(200)));
+  const area = document.getElementById('historyArea'); area.innerHTML = '<h4>Sales</h4>';
+  const table = document.createElement('table'); table.className='table';
+  table.innerHTML = '<thead><tr><th>Product</th><th>Items</th><th>Total</th><th>Date</th></tr></thead>';
+  const tbody = document.createElement('tbody');
+  snap.forEach(d=>{ const s = d.data(); const date = s.createdAt?.toDate ? s.createdAt.toDate().toLocaleString() : ''; tbody.innerHTML += `<tr><td>${s.productName}</td><td>${(s.items||[]).map(i=>i.color+':'+i.qty).join(',')}</td><td>${s.total||0}</td><td>${date}</td></tr>`; });
+  table.appendChild(tbody); area.appendChild(table);
+});
+document.getElementById('showPurchases').addEventListener('click', async ()=>{
+  const snap = await getDocs(query(purchasesCol, orderBy('createdAt','desc'), limit(200)));
+  const area = document.getElementById('historyArea'); area.innerHTML = '<h4>Purchases</h4>';
+  const table = document.createElement('table'); table.className='table';
+  table.innerHTML = '<thead><tr><th>Product</th><th>Items</th><th>Total</th><th>Date</th></tr></thead>';
+  const tbody = document.createElement('tbody');
+  snap.forEach(d=>{ const s = d.data(); const date = s.createdAt?.toDate ? s.createdAt.toDate().toLocaleString() : ''; tbody.innerHTML += `<tr><td>${s.productName}</td><td>${(s.items||[]).map(i=>i.color+':'+i.qty).join(',')}</td><td>${s.total||0}</td><td>${date}</td></tr>`; });
+  table.appendChild(tbody); area.appendChild(table);
+});
+document.getElementById('showStockLog').addEventListener('click', async ()=>{
+  const snap = await getDocs(query(stockLogCol, orderBy('createdAt','desc'), limit(200)));
+  const area = document.getElementById('historyArea'); area.innerHTML = '<h4>Stock Log</h4>';
+  const table = document.createElement('table'); table.className='table';
+  table.innerHTML = '<thead><tr><th>Product</th><th>Op</th><th>Items</th><th>By</th><th>Date</th></tr></thead>';
+  const tbody = document.createElement('tbody');
+  snap.forEach(d=>{ const s = d.data(); const date = s.createdAt?.toDate ? s.createdAt.toDate().toLocaleString() : ''; tbody.innerHTML += `<tr><td>${s.productName}</td><td>${s.op}</td><td>${(s.items||[]).map(i=>i.color+':'+i.qty).join(',')}</td><td>${s.by||''}</td><td>${date}</td></tr>`; });
+  table.appendChild(tbody); area.appendChild(table);
+});
+
+// Workers tab: load, add, delete, change role (admin only)
+async function loadWorkers(){
+  const tbody = document.getElementById('workersTable');
+  tbody.innerHTML = '<tr><td colspan="4">Loading...</td></tr>';
+  const snap = await getDocs(query(workersCol, orderBy('name')));
+  tbody.innerHTML = '';
+  snap.forEach(d=>{
+    const w = d.data();
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${w.name||''}</td><td>${w.key||''}</td><td><select data-id="${d.id}" class="w_role_select"><option value="worker">worker</option><option value="admin">admin</option></select></td><td><button class="button ghost" data-del="${d.id}">Delete</button></td>`;
+    tbody.appendChild(tr);
+    const sel = tr.querySelector('.w_role_select');
+    sel.value = w.role || 'worker';
+    sel.addEventListener('change', async (e)=>{
+      const newRole = e.target.value;
+      // only admin allowed
+      if((worker.role || '') !== 'admin'){ alert('Only admin can change roles'); e.target.value = w.role || 'worker'; return; }
+      await updateDoc(doc(db, 'workers', d.id), { role: newRole });
+      alert('Role updated');
+    });
+    tr.querySelector('[data-del]').addEventListener('click', async ()=>{
+      if((worker.role || '') !== 'admin'){ alert('Only admin can delete workers'); return; }
+      if(confirm('Delete this worker?')){
+        await deleteDoc(doc(db, 'workers', d.id));
+        await loadWorkers();
+      }
+    });
+  });
+}
+
+// Add worker
+document.getElementById('addWorkerForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  if((worker.role || '') !== 'admin'){ alert('Only admin can add workers'); return; }
+  const name = document.getElementById('w_name').value.trim();
+  const key = document.getElementById('w_key').value.trim();
+  const role = document.getElementById('w_role').value;
+  if(!key || key.length < 3){ alert('Key must be at least 3 chars'); return; }
+  await addDoc(workersCol, { name, key, role });
+  alert('Worker added');
+  e.target.reset();
+  await loadWorkers();
+});
+
+// Profit chart (admin only)
+let profitChart = null;
+async function loadProfitChart(period='daily'){
+  const isAdmin = (worker.role || '') === 'admin';
+  const canvas = document.getElementById('profitChart');
+  if(!isAdmin){ canvas.style.display = 'none'; return; } else { canvas.style.display = ''; }
+  const salesSnap = await getDocs(query(salesCol, orderBy('createdAt','desc'), limit(1000)));
+  const purchasesSnap = await getDocs(query(purchasesCol, orderBy('createdAt','desc'), limit(1000)));
+  const sales = salesSnap.docs.map(d=> d.data());
+  const purchases = purchasesSnap.docs.map(d=> d.data());
+  function bucketKey(date){
+    const d = new Date(date);
+    if(period==='daily') return d.toISOString().slice(0,10);
+    if(period==='weekly'){ const y = d.getFullYear(); const w = Math.ceil((((d - new Date(y,0,1))/86400000)+1)/7); return y+'-W'+w; }
+    if(period==='monthly') return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    if(period==='yearly') return String(d.getFullYear());
+    return d.toISOString().slice(0,10);
+  }
+  const buckets = {};
+  sales.forEach(s=>{
+    const t = s.createdAt && s.createdAt.toDate ? s.createdAt.toDate() : new Date();
+    const k = bucketKey(t);
+    buckets[k] = buckets[k] || { revenue:0, cost:0 };
+    buckets[k].revenue += s.total || 0;
+  });
+  purchases.forEach(p=>{
+    const t = p.createdAt && p.createdAt.toDate ? p.createdAt.toDate() : new Date();
+    const k = bucketKey(t);
+    buckets[k] = buckets[k] || { revenue:0, cost:0 };
+    buckets[k].cost += p.total || 0;
+  });
+  const labels = Object.keys(buckets).sort();
+  const data = labels.map(l=> (buckets[l].revenue || 0) - (buckets[l].cost || 0));
+  if(profitChart) profitChart.destroy();
+  profitChart = new Chart(document.getElementById('profitChart').getContext('2d'), {
+    type: 'bar',
+    data: { labels, datasets: [{ label: 'Net Profit', data, backgroundColor: 'rgba(59,130,246,0.8)' }] },
+    options: { responsive:true, maintainAspectRatio:false }
+  });
+}
+
+document.getElementById('profitPeriod').addEventListener('change', ()=> loadProfitChart(document.getElementById('profitPeriod').value));
+
+// initial load
+await loadProducts();
+await loadWorkers();
+await loadProfitChart(document.getElementById('profitPeriod').value);
+
+// realtime updates for products, workers, and charts
+onSnapshot(productsCol, { includeMetadataChanges:true }, async ()=> { await loadProducts(); await loadProfitChart(document.getElementById('profitPeriod').value); });
+onSnapshot(workersCol, { includeMetadataChanges:true }, async ()=> { await loadWorkers(); });
